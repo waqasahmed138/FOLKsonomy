@@ -41,7 +41,7 @@ def download_and_extract():
     zip_url = 'https://github.com/waqasahmed138/FOLKsonomy/blob/main/diabetes_subset_rf2.zip'
 
     # Define the local path where the ZIP file will be stored
-    zip_file_path = '/diabetes_subset_rf2.zip'  # Colab temp folder
+    zip_file_path = 'diabetes_subset_rf2.zip'  # Colab temp folder
     extract_path = './diabetes_subset_rf2'
 
     # Download the ZIP file
@@ -141,4 +141,5 @@ if user_input:
         st.warning("🟡 Medium similarity — potential child concept candidate.")
     else:
         st.error("🔴 Low similarity — likely new or unrelated concept.")
+
 
