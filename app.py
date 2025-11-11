@@ -23,6 +23,11 @@ tokenizer, model = load_model()
 # ===============================================================
 @st.cache_data
 def load_rf2_data():
+    # Use relative path for the uploaded dataset in Streamlit Cloud
+BASE_DIR = "./diabetes_subset_rf2"  # Folder where the dataset is uploaded
+desc_path = f"{BASE_DIR}/descriptions_diabetes.tsv"
+concept_path = f"{BASE_DIR}/concepts_diabetes.tsv"
+rels_path = f"{BASE_DIR}/relationships_diabetes.tsv"
     base_dir = "/content/drive/MyDrive/diabetes_subset_rf2"  # Update this if needed
     desc_path = f"{base_dir}/descriptions_diabetes.tsv"
     desc = pd.read_csv(desc_path, sep="\t", dtype=str)
@@ -89,3 +94,4 @@ if user_input:
         st.warning("🟡 Medium similarity — potential child concept candidate.")
     else:
         st.error("🔴 Low similarity — likely new or unrelated concept.")
+
