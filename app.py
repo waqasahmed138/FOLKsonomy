@@ -54,9 +54,6 @@ def download_and_extract():
     # Extract the ZIP file
     extract_zip(zip_file_path, extract_path)
 
-    # Debugging: List the files to verify the extraction
-    st.write(f"📂 Extracted files in {extract_path}: {os.listdir(extract_path)}")
-
     return extract_path
 
 # ---------------------------------------------------------------
@@ -71,13 +68,8 @@ def load_rf2_data():
     concept_path = f"{extract_path}/concepts_diabetes.tsv"
     rels_path = f"{extract_path}/relationships_diabetes.tsv"
 
-    # Ensure files exist in the extracted directory
-    if not os.path.exists(desc_path):
-        st.error(f"❌ File not found: {desc_path}")
-    if not os.path.exists(concept_path):
-        st.error(f"❌ File not found: {concept_path}")
-    if not os.path.exists(rels_path):
-        st.error(f"❌ File not found: {rels_path}")
+    # Debugging: List the files to ensure extraction worked
+    st.write(f"📂 Extracted files: {os.listdir(extract_path)}")
 
     # Read the TSV files into DataFrames
     descriptions = pd.read_csv(desc_path, sep="\t", dtype=str)
