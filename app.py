@@ -6,9 +6,10 @@ from transformers import AutoTokenizer, AutoModel
 import torch
 from sklearn.metrics.pairwise import cosine_similarity
 import numpy as np
+import requests
 
 # ---------------------------------------------------------------
-# Load SapBERT model
+# Load SapBERT model (optimized for biomedical concept matching)
 # ---------------------------------------------------------------
 @st.cache_resource
 def load_model():
@@ -37,20 +38,19 @@ def extract_zip(zip_file, extract_path):
 # ---------------------------------------------------------------
 @st.cache_data
 def download_and_extract():
-    # URL of the ZIP file in your GitHub repository
-    zip_url = 'https://github.com/waqasahmed138/FOLKsonomy/blob/main/diabetes_subset_rf2.zip'
+    # URL of the ZIP file in your GitHub repository (use the raw URL)
+    zip_url = 'https://github.com/waqasahmed138/FOLKsonomy/raw/main/diabetes_subset_rf2.zip'  # Update to your GitHub raw URL
 
     # Define the local path where the ZIP file will be stored
-    zip_file_path = 'diabetes_subset_rf2.zip'  # Colab temp folder
-    extract_path = './diabetes_subset_rf2'
+    zip_file_path = '/tmp/diabetes_subset_rf2.zip'  # Temporary directory in Colab/Streamlit Cloud
+    extract_path = './diabetes_subset_rf2'  # Extracted folder path in the current working directory
 
     # Download the ZIP file
     st.write(f"🔄 Downloading ZIP file from: {zip_url}")
-    import requests
     r = requests.get(zip_url)
     with open(zip_file_path, 'wb') as f:
         f.write(r.content)
-    
+
     # Extract the ZIP file
     extract_zip(zip_file_path, extract_path)
 
@@ -63,10 +63,13 @@ def load_rf2_data():
     # Extract the data files from the ZIP
     extract_path = download_and_extract()
 
-    # Define the paths for the `.tsv` files
+    # Define the paths for the `.tsv` files relative to the extracted folder
     desc_path = f"{extract_path}/descriptions_diabetes.tsv"
     concept_path = f"{extract_path}/concepts_diabetes.tsv"
     rels_path = f"{extract_path}/relationships_diabetes.tsv"
+
+    # Debugging: List the files to ensure extraction worked
+    st.write(f"📂 Extracted files: {os.listdir(extract_path)}")
 
     # Read the TSV files into DataFrames
     descriptions = pd.read_csv(desc_path, sep="\t", dtype=str)
@@ -141,5 +144,3 @@ if user_input:
         st.warning("🟡 Medium similarity — potential child concept candidate.")
     else:
         st.error("🔴 Low similarity — likely new or unrelated concept.")
-
-
