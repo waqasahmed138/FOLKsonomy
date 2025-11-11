@@ -1,13 +1,15 @@
 import streamlit as st
 import pandas as pd
+import zipfile
+import os
 from transformers import AutoTokenizer, AutoModel
 import torch
 from sklearn.metrics.pairwise import cosine_similarity
 import numpy as np
 
-# ===============================================================
-# Load SapBERT model (optimized for biomedical concept matching)
-# ===============================================================
+# ---------------------------------------------------------------
+# Load SapBERT model
+# ---------------------------------------------------------------
 @st.cache_resource
 def load_model():
     model_name = "cambridgeltl/SapBERT-from-PubMedBERT-fulltext"
@@ -18,29 +20,74 @@ def load_model():
 
 tokenizer, model = load_model()
 
-# ===============================================================
-# Load Diabetes Subset RF2 files from the uploaded location
-# ===============================================================
-@st.cache_data
-def load_rf2_data():
-    # Use relative path for the uploaded dataset in Streamlit Cloud
-    BASE_DIR = "./diabetes_subset_rf2"  # Folder where the dataset is uploaded
-    desc_path = f"{BASE_DIR}/descriptions_diabetes.tsv"
-    concept_path = f"{BASE_DIR}/concepts_diabetes.tsv"
-    rels_path = f"{BASE_DIR}/relationships_diabetes.tsv"
-    base_dir = "./diabetes_subset_rf2"  # Update this if needed
-    desc_path = f"{base_dir}/descriptions_diabetes.tsv"
-    desc = pd.read_csv(desc_path, sep="\t", dtype=str)
-    desc = desc[desc["active"] == "1"]
-    return desc
+# ---------------------------------------------------------------
+# Function to extract ZIP file if not already extracted
+# ---------------------------------------------------------------
+def extract_zip(zip_file, extract_path):
+    if not os.path.exists(extract_path):
+        os.makedirs(extract_path, exist_ok=True)
+        with zipfile.ZipFile(zip_file, 'r') as zip_ref:
+            zip_ref.extractall(extract_path)
+        st.write("✅ ZIP file extracted.")
+    else:
+        st.write("📂 ZIP already extracted.")
 
-descriptions = load_rf2_data()
+# ---------------------------------------------------------------
+# Download and extract the ZIP file containing the dataset
+# ---------------------------------------------------------------
+@st.cache_data
+def download_and_extract():
+    # URL of the ZIP file in your GitHub repository
+    zip_url = 'https://github.com/waqasahmed138/FOLKsonomy/blob/main/diabetes_subset_rf2.zip'
+
+    # Define the local path where the ZIP file will be stored
+    zip_file_path = '/MyDrive/diabetes_subset_rf2.zip'  # Colab temp folder
+    extract_path = './diabetes_subset_rf2'
+
+    # Download the ZIP file
+    st.write(f"🔄 Downloading ZIP file from: {zip_url}")
+    import requests
+    r = requests.get(zip_url)
+    with open(zip_file_path, 'wb') as f:
+        f.write(r.content)
+    
+    # Extract the ZIP file
+    extract_zip(zip_file_path, extract_path)
+
+    return extract_path
+
+# ---------------------------------------------------------------
+# Load the Diabetes Subset RF2 files
+# ---------------------------------------------------------------
+def load_rf2_data():
+    # Extract the data files from the ZIP
+    extract_path = download_and_extract()
+
+    # Define the paths for the `.tsv` files
+    desc_path = f"{extract_path}/descriptions_diabetes.tsv"
+    concept_path = f"{extract_path}/concepts_diabetes.tsv"
+    rels_path = f"{extract_path}/relationships_diabetes.tsv"
+
+    # Read the TSV files into DataFrames
+    descriptions = pd.read_csv(desc_path, sep="\t", dtype=str)
+    concepts = pd.read_csv(concept_path, sep="\t", dtype=str)
+    relationships = pd.read_csv(rels_path, sep="\t", dtype=str)
+
+    return descriptions, concepts, relationships
+
+# ---------------------------------------------------------------
+# Load the RF2 dataset
+# ---------------------------------------------------------------
+descriptions, concepts, relationships = load_rf2_data()
+
+# Keep active English terms only
+descriptions = descriptions[descriptions["active"] == "1"]
 all_terms = descriptions["term"].dropna().unique().tolist()
 concept_ids = descriptions["conceptId"].tolist()
 
-# ===============================================================
+# ---------------------------------------------------------------
 # Embed all terms once to calculate embeddings
-# ===============================================================
+# ---------------------------------------------------------------
 @st.cache_resource
 def embed_all_terms(terms):
     vectors = []
@@ -56,9 +103,9 @@ def embed_all_terms(terms):
 
 term_embeddings = embed_all_terms(all_terms)
 
-# ===============================================================
+# ---------------------------------------------------------------
 # Helper: Compute similarity between user input and diabetes terms
-# ===============================================================
+# ---------------------------------------------------------------
 def get_similarity(input_text):
     inputs = tokenizer([input_text], padding=True, truncation=True, return_tensors='pt')
     with torch.no_grad():
@@ -68,9 +115,9 @@ def get_similarity(input_text):
     idx = int(np.argmax(sims))
     return all_terms[idx], concept_ids[idx], float(sims[idx])
 
-# ===============================================================
+# ---------------------------------------------------------------
 # Streamlit UI Layout
-# ===============================================================
+# ---------------------------------------------------------------
 st.set_page_config(page_title="Diabetes Concept Matcher", page_icon="🩸")
 st.title("🩸 Diabetes Concept Matcher using SapBERT + SNOMED CT RF2 Subset")
 st.markdown("Enter any health-related tag or phrase below to match it to the closest Diabetes concept.")
@@ -94,6 +141,3 @@ if user_input:
         st.warning("🟡 Medium similarity — potential child concept candidate.")
     else:
         st.error("🔴 Low similarity — likely new or unrelated concept.")
-
-
-
