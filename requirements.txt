@@ -1,0 +1,6 @@
+streamlit
+pyngrok
+transformers
+torch
+scikit-learn
+pandas
