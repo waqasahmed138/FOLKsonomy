@@ -42,8 +42,8 @@ def download_and_extract():
     zip_url = 'https://github.com/waqasahmed138/FOLKsonomy/raw/main/diabetes_subset_rf2.zip'  # Update to your GitHub raw URL
 
     # Define the local path where the ZIP file will be stored
-    zip_file_path = '/diabetes_subset_rf2.zip'  # Temporary directory in Colab/Streamlit Cloud
-    extract_path = './diabetes_subset_rf2'  # Extracted folder path in the current working directory
+    zip_file_path = 'G:/diabetes_subset_rf2.zip'  # Temporary directory in Colab/Streamlit Cloud
+    extract_path = 'C:\Users\Aqib Rehman\Downloads\diabetes_subset_rf2'  # Extracted folder path in the current working directory
 
     # Download the ZIP file
     st.write(f"🔄 Downloading ZIP file from: {zip_url}")
@@ -144,4 +144,5 @@ if user_input:
         st.warning("🟡 Medium similarity — potential child concept candidate.")
     else:
         st.error("🔴 Low similarity — likely new or unrelated concept.")
+
 
